@@ -76,6 +76,7 @@ pred Grille
 	IntersectionsReceptaclesUniques
 	init[first]
 	ToutesLesCommandesSontAttribuees
+	TousLesReceptaclesSontAtteignables
 	VoisinDirect
 }
 
@@ -105,12 +106,17 @@ pred ToutesLesCommandesSontAttribuees
 	all c:Commande | some d:Drone | some c': d.commandes | c=c'
 }
 
+pred TousLesReceptaclesSontAtteignables
+{
+	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]]=< 3))
+}
+
 assert NoDistantReceptacle
 {
 	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
-check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time ,exactly 2 Drone , 5 Int
+check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
 
 pred Deplacement [d:Drone, t,t':Time]
 {
