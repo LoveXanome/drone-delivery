@@ -40,11 +40,12 @@ pred IntersectionsUniques
 
 /*
 * Les receptacles ne peuvent pas être confondus
+* Un receptacle ne peut pas se trouver au meme endroit que l'entrepot
 */
 pred IntersectionsReceptaclesUniques 
 {
 	no r,r':Receptacle | (r!=r') && (r.i = r'.i)
-	no r:Receptacle, e:Entrepot | (r.i = e.i)
+	no r1:Receptacle, e:Entrepot | (r1.i = e.i)
 }
 
 
@@ -81,6 +82,13 @@ pred VoisinDirect
 	//all d:Drone | all i2:d.chemin | some r:Receptacle | (i2=r.i)
 }
 
+assert NoDistantReceptacle
+{
+	Grille =>	all r:Receptacle | some r':Receptacle | ((r != r')&&(absVal[r.i.x - r'.i.x]+absVal[r.i.y - r'.i.y] =< 3))
+}
+
+check NoDistantReceptacle for 5 but 3 Receptacle, 1 Time ,4 Drone , 5 Int
+
 pred Deplacement [d:Drone, t,t':Time]
 {
 	
@@ -91,4 +99,4 @@ pred go
 {
 	Grille
 }
-run go for 10 but 1 Time, 4 Drone , 5 Int
+run go for 10 but 1 Time ,4 Drone , 5 Int
