@@ -65,26 +65,23 @@ fun nextKey [i:Intersection, is: set Intersection]: set Intersection
 	min[i.nexts & is]
 }
 
+fun absVal [n:Int]: Int
+{
+	(n < 0) implies (Int[0-n]) else  Int [n]
+}
+
 /*
 * On prends les intersections et non pas les receptacles pour pouvoir tester l'entrepôt
 * On s'assure que toutes les intersections du Drone sont voisin directs
 */
 pred VoisinDirect
 {	
-	all d:Drone | all i0,i1 : d.chemin | (i1 = nextKey[i0,d.chemin]) implies ((i0 != i1)&&((i1.x - i0.x)+(i1.y - i0.y) =< 3) || ((i0.x - i1.x)+(i0.y - i1.y) =< 3)) //Distance de Manhattan
 	all d:Drone, e:Entrepot |((d.chemin.min = e.i) && (d.chemin.max = d.df))
+	all d:Drone | all i0,i1 : d.chemin | (i1 = nextKey[i0,d.chemin]) implies ((i0 != i1)&&(absVal[i1.x - i0.x]+absVal[i1.y - i0.y] =< 3)) //Distance de Manhattan
 	//all d:Drone | all i2:d.chemin | some r:Receptacle | (i2=r.i)
 }
 
-pred Deplacement [d:Drone]
-{
-	
-}
-
-/*
-* Reception d'une livraison à l'entrepôt depuis l'Internet
-*/
-pred initialisationLivraison [c:Commande, d:Drone]
+pred Deplacement [d:Drone, t,t':Time]
 {
 	
 }
@@ -94,4 +91,4 @@ pred go
 {
 	Grille
 }
-run go for 5 but 1 Time
+run go for 10 but 1 Time, 4 Drone , 5 Int
