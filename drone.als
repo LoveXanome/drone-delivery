@@ -1,17 +1,19 @@
 open util/ordering[Time] as to
-open util/ordering[Intersection] as io
+open util/ordering[ReceptacleAbstrait] as io
 
 sig Drone 
 {
 	ic: Intersection, //Intersection courante
-	chemin: set Intersection,//Chemin
-	df: Intersection, //Destination finale
+	chemin: set ReceptacleAbstrait,//Chemin
+	df: Receptacle, //Destination finale
 	currentDest: chemin one -> Time
 }
-sig Receptacle 
+
+abstract sig ReceptacleAbstrait
 {
 	i:Intersection
 }
+
 sig Time {}
 sig Intersection 
 {
@@ -24,9 +26,12 @@ sig Commande
 	receptacle : lone Receptacle
 }
 
-one sig Entrepot
+sig Receptacle extends ReceptacleAbstrait
 {
-	i:Intersection
+}
+
+one sig Entrepot extends ReceptacleAbstrait
+{
 }
 
 
@@ -44,10 +49,14 @@ pred IntersectionsUniques
 */
 pred IntersectionsReceptaclesUniques 
 {
-	no r,r':Receptacle | (r!=r') && (r.i = r'.i)
-	no r1:Receptacle, e:Entrepot | (r1.i = e.i)
+	no r,r':ReceptacleAbstrait | (r!=r') && (r.i = r'.i)
 }
 
+
+pred init [d:Drone]
+{
+	d.ic = d.chemin.min.i
+}
 
 /*
 * On crée la grille d'intersections
@@ -59,16 +68,17 @@ pred Grille
 	IntersectionsUniques
 	IntersectionsReceptaclesUniques
 	VoisinDirect
+	all d:Drone | init[d]
 }
 
-fun nextKey [i:Intersection, is: set Intersection]: set Intersection
+fun nextKey [r:ReceptacleAbstrait, rs: set ReceptacleAbstrait]: set ReceptacleAbstrait
 {
-	min[i.nexts & is]
+	min[r.nexts & rs]
 }
 
 fun absVal [n:Int]: Int
 {
-	(n < 0) implies (Int[0-n]) else  Int [n]
+	(n < 0) implies (Int[minus[0,n]]) else  Int [n]
 }
 
 /*
@@ -77,17 +87,17 @@ fun absVal [n:Int]: Int
 */
 pred VoisinDirect
 {	
-	all d:Drone, e:Entrepot |((d.chemin.min = e.i) && (d.chemin.max = d.df))
-	all d:Drone | all i0,i1 : d.chemin | (i1 = nextKey[i0,d.chemin]) implies ((i0 != i1)&&(absVal[i1.x - i0.x]+absVal[i1.y - i0.y] =< 3)) //Distance de Manhattan
+	all d:Drone, e:Entrepot |((d.chemin.min = e) && (d.chemin.max = d.df))
+	all d:Drone | all r0,r1 : d.chemin | (r1 = nextKey[r0,d.chemin]) implies ((r0 != r1)&&(absVal[minus[r1.i.x,r0.i.x]]+absVal[minus[r1.i.y,r0.i.y]]=< 3)) //Distance de Manhattan
 	//all d:Drone | all i2:d.chemin | some r:Receptacle | (i2=r.i)
 }
 
 assert NoDistantReceptacle
 {
-	Grille =>	all r:Receptacle | some r':Receptacle | ((r != r')&&(absVal[r.i.x - r'.i.x]+absVal[r.i.y - r'.i.y] =< 3))
+	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
-check NoDistantReceptacle for 5 but 3 Receptacle, 1 Time ,4 Drone , 5 Int
+check NoDistantReceptacle for 5 but exactly 1 Receptacle, 1 Time ,exactly 2 Drone , 5 Int
 
 pred Deplacement [d:Drone, t,t':Time]
 {

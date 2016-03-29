@@ -14,7 +14,7 @@ one sig B extends S
 
 fun absVal [n:Int]: Int
 {
-	(n < 0) implies (Int[0-n]) else  Int [n]
+	(n < 0) implies (Int[minus[0,n]]) else  Int [n]
 }
 
 assert A0
@@ -23,3 +23,10 @@ assert A0
 }
 
 check A0 for 5
+
+assert A1
+{
+	absVal[-2] = 2
+}
+
+check A1 for 2
