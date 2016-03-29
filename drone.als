@@ -72,6 +72,8 @@ fun nextKey [i:Intersection, is: set Intersection]: set Intersection
 pred VoisinDirect
 {	
 	all d:Drone | all i0,i1 : d.chemin | (i1 = nextKey[i0,d.chemin]) implies ((i0 != i1)&&((i1.x - i0.x)+(i1.y - i0.y) =< 3) || ((i0.x - i1.x)+(i0.y - i1.y) =< 3)) //Distance de Manhattan
+	all d:Drone, e:Entrepot |((d.chemin.min = e.i) && (d.chemin.max = d.df))
+	//all d:Drone | all i2:d.chemin | some r:Receptacle | (i2=r.i)
 }
 
 pred Deplacement [d:Drone]
