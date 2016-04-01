@@ -28,7 +28,7 @@ sig Drone
 	commandes: set Commande,
 	currentCommande: commandes one -> Time,
 
-	batterie: Batterie one -> Time
+	batterie: Batterie,
 }
 
 /**
@@ -37,7 +37,7 @@ sig Drone
 */
 sig Batterie
 {
-	currentValue: Int,
+	currentValue: Int one -> Time,
 	maxValue: Int
 }
 
@@ -105,6 +105,7 @@ fact traces
 																	FUN
 ============================================================
 */
+
 fun nextReceptacle [r:ReceptacleAbstrait, rs: set ReceptacleAbstrait]: set ReceptacleAbstrait
 {
 	min[r.nexts & rs]
@@ -129,7 +130,6 @@ fun longueurCheminIntersection [is: set Intersection]: Int
 {
 	#is
 }
-
 
 /**
 ============================================================
@@ -175,18 +175,31 @@ pred Grille
 
 	init[first]
 
-	ToutesLesCommandesSontAttribuees
+	ToutesLesCommandesSontAttribuees // A mettre dans init
 	TousLesReceptaclesSontAtteignables
 
 	CalculChemin[first]
 }
 
-
+/**
+	Permet d'etre certain que toutes les commandes seront attribuees a un drone
+*/
 pred ToutesLesCommandesSontAttribuees
 {
 	all c:Commande | some d:Drone | some c': d.commandes | c=c'
 }
 
+/**
+	Permet d'etre certain que toutes les batteries seront associees a un drone
+*/
+pred ToutesLesBatteriesSontAssociees
+{
+	all b:Batterie | some d:Drone | some b': d.batterie | b = b'
+}
+
+/**
+	Permet d'etre certain que tous les receptacles seront atteignables
+*/
 pred TousLesReceptaclesSontAtteignables
 {
 	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
@@ -228,6 +241,7 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 		all e:Entrepot | (ci.t.t = d.df.t.i) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
 	}
 	noInternalDroneChange[t,t',d]
+	usingEnergy[d, t, t']
 }
 
 
@@ -254,8 +268,19 @@ pred cheminLePlusCourt[d:Drone, t:Time]
 */
 pred initBatterie[t:Time]
 {
-	all d:Drone | d.batterie.t.maxValue = 3
-	all d:Drone | d.batterie.t.currentValue = d.batterie.t.maxValue
+	all d:Drone | d.batterie.maxValue = 3
+	all d:Drone | d.batterie.currentValue.t = d.batterie.maxValue
+}
+
+/**
+	Le processus de deplacement engendre une baisse de la batterie
+*/
+pred usingEnergy[d:Drone, t,t': Time]
+{
+	let oldBatteryValue = d.batterie.currentValue
+	{
+		oldBatteryValue.t' = minus[oldBatteryValue.t, 1] 
+	}
 }
 
 pred go 
@@ -291,4 +316,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 5 Time ,exactly 1 Drone , 6 Int
+run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 5 Time, exactly 1 Drone , 4 Int
