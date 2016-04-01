@@ -27,6 +27,13 @@ sig Drone
 	
 	commandes: set Commande,
 	currentCommande: commandes one -> Time
+
+}
+
+sig Batterie
+{
+	currentValue: Int,
+	maxValue: Int
 }
 
 /**
