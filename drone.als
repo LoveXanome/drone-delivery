@@ -76,6 +76,7 @@ one sig Entrepot extends ReceptacleAbstrait
 																	FACTS
 ============================================================
 */
+
 /**
 	DisjointCommandSets
 		Chaque commandes peut être dans un seul drône
@@ -98,7 +99,6 @@ fact traces
 		Deplacement [d, t,t', i]
 	}
 }
-
 
 /**
 ============================================================
@@ -268,27 +268,24 @@ pred cheminLePlusCourt[d:Drone, t:Time]
 */
 pred initBatterie[t:Time]
 {
+	ToutesLesBatteriesSontAssociees
 	all d:Drone | d.batterie.maxValue = 3
 	all d:Drone | d.batterie.currentValue.t = d.batterie.maxValue
 }
 
 /**
-	Le processus de deplacement engendre une baisse de la batterie
+	Le processus de deplacement engendre une baisse de la batterie mais cette valeur ne peut jamais etre negative
 */
 pred usingEnergy[d:Drone, t,t': Time]
 {
 	let oldBatteryValue = d.batterie.currentValue
 	{
-		oldBatteryValue.t' = minus[oldBatteryValue.t, 1] 
+		(oldBatteryValue.t > 0) implies (oldBatteryValue.t' = minus[oldBatteryValue.t, 1])
+		else oldBatteryValue.t' = oldBatteryValue.t
 	}
 }
 
-pred go 
-{
-	//Grille
-	//all d:Drone | minus[longueurCheminIntersection[d.cheminIntersection.first],1] = 3
-	//all d:Drone | plus[absVal[minus[d.cheminReceptacle.first.min.i.x,d.cheminReceptacle.first.max.i.x]],absVal[minus[d.cheminReceptacle.first.min.i.y,d.cheminReceptacle.first.max.i.y]]] = 1
-}
+pred go {}
 
 /**
 ============================================================
@@ -299,6 +296,11 @@ pred go
 assert NoDistantReceptacle
 {
 	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+}
+
+assert NoBatteryBelowZero
+{
+	
 }
 
 /**
@@ -316,4 +318,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 5 Time, exactly 1 Drone , 4 Int
+run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone , 5 Int
