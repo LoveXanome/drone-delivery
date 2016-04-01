@@ -75,7 +75,7 @@ pred Grille
 	no i:Intersection | ((i.x) < 0) || ((i.y )<0) || ((i.x)>4) || ((i.y)>4)
 	IntersectionsUniques
 	IntersectionsReceptaclesUniques
-	init[first]
+	init [first]
 	ToutesLesCommandesSontAttribuees
 	TousLesReceptaclesSontAtteignables
 	VoisinDirect[first]
@@ -138,20 +138,33 @@ pred Deplacement [d:Drone, t,t':Time, i:Intersection]
 	/* Précondition */
 	i in d.cheminIntersection.t
 	/* Postcondition */
-	let ci = d.currentIntersection.t
+	let ci = d.currentIntersection
 	{
-		(i = nextIntersection[ci.t, d.cheminIntersection.t] and ci.t' = i)
+		(i = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = i)
 	}
-	noCheminChange[t,t',d]
+	noInternalDroneChange[t,t',d]
 }
 
-pred noCheminChange[t,t':Time, d:Drone] 
+fact traces 
 {
-	(d.cheminIntersection.t = d.cheminIntersection.t' and	d.cheminReceptacle.t = d.cheminReceptacle.t' and d.df.t = d.df.t')
+   
+	Grille
+    all t: Time-last | let t' = t.next
+	{
+		some d:Drone, i: Intersection |
+		Deplacement [d, t,t', i]
+	}
+}
+
+pred noInternalDroneChange[t,t':Time, d:Drone] 
+{
+	(d.cheminIntersection.t = d.cheminIntersection.t' and	
+	 d.cheminReceptacle.t = d.cheminReceptacle.t' and 
+	 d.df.t = d.df.t' and currentCommande.t = currentCommande.t')
 }
 
 pred go 
 {
-	Grille
+	//Grille
 }
-run go for 5 but exactly 7 Intersection, 1 Receptacle, 2 Time ,exactly 1 Drone , 5 Int
+run go for 5 but exactly 7 Intersection, 1 Receptacle, 4 Time ,exactly 1 Drone , 5 Int
