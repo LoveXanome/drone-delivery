@@ -233,17 +233,19 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	/* Postcondition */
 	let ci = d.currentIntersection
 	{
+		((all interReceptacleAbstrait:ReceptacleAbstrait.i | ci.t.t = interReceptacleAbstrait) && (NotEnoughBattery[d.batterie, d.currentIntersection.t.t, d.df.t.i, t])) implies ReloadBattery[d,t,t']
+		else {
 		//On se déplace vers la livraison
 		(d.df.t = d.cheminReceptacle.t.max && ci.t.t != d.df.t.i) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
 		//Ou on rentre à l'entrepôt
 		(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
 		//Ou on fait demi-tour. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
 		all e:Entrepot | (ci.t.t = d.df.t.i) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
+		usingEnergy[d, t, t']
+		}
 	}
 	noInternalDroneChange[t,t',d]
-	usingEnergy[d, t, t']
 }
-
 
 pred noInternalDroneChange[t,t':Time, d:Drone] 
 {
@@ -285,6 +287,28 @@ pred usingEnergy[d:Drone, t,t': Time]
 	}
 }
 
+/**
+	Verification de la batterie pour analyser si le deplacement vers la destination est possible
+	Pour l'instant on souhaite recharger la batterie a son maximum avant de partir du receptacle
+*/
+pred NotEnoughBattery[b:Batterie, currentInter:Intersection, destFinale:Intersection, t:Time]
+{
+	(currentInter != destFinale) && ((plus[absVal[minus[destFinale.x, currentInter.x]], absVal[minus[destFinale.y, currentInter.y]]]) > 3) && (b.currentValue.t != 3)
+}
+
+/**
+	Rechargement de la batterie : une unite de temps pour une unite de batterie lorsque le drone se trouve sur l'entrepot ou un
+	quelconque receptacle
+*/
+pred ReloadBattery[d:Drone, t,t':Time]
+{
+	let oldBatteryValue = d.batterie.currentValue
+	{
+		(oldBatteryValue.t < 3) implies (oldBatteryValue.t' = plus[oldBatteryValue.t, 1])
+		else oldBatteryValue.t' = oldBatteryValue.t
+	}
+}
+
 pred go {}
 
 /**
@@ -300,7 +324,7 @@ assert NoDistantReceptacle
 
 assert NoBatteryBelowZero
 {
-	
+	all b:Batterie | all t:Time | b.currentValue.t >= 0
 }
 
 /**
@@ -310,7 +334,7 @@ assert NoBatteryBelowZero
 */
 
 check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
-
+check NoBatteryBelowZero for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone , 5 Int
 
 /**
 ============================================================
@@ -318,4 +342,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone , 5 Int
+run go for 5 but exactly 5 Intersection, exactly 2 Receptacle, 1 Commande, 10 Time, exactly 1 Drone , 5 Int
