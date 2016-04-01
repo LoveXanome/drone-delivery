@@ -73,6 +73,20 @@ fact DisjointCommandSets
 	Drone<:commandes in Drone lone-> Commande
 }
 
+/**
+* Gestion du temps et du déplacement
+**/
+fact traces 
+{
+   
+	Grille
+    all t: Time-last | let t' = t.next
+	{
+		all d:Drone | some i: Intersection |
+		Deplacement [d, t,t', i]
+	}
+}
+
 
 /**
 ============================================================
@@ -87,6 +101,11 @@ fun nextReceptacle [r:ReceptacleAbstrait, rs: set ReceptacleAbstrait]: set Recep
 fun nextIntersection [i:Intersection, is: set Intersection]: set Intersection
 {
 	min[i.nexts & is]
+}
+
+fun prevIntersection [i:Intersection, is: set Intersection]: set Intersection
+{
+	max[is & i.prevs]
 }
 
 fun absVal [n:Int]: Int
@@ -187,16 +206,6 @@ pred Deplacement [d:Drone, t,t':Time, i:Intersection]
 	noInternalDroneChange[t,t',d]
 }
 
-fact traces 
-{
-   
-	Grille
-    all t: Time-last | let t' = t.next
-	{
-		some d:Drone, i: Intersection |
-		Deplacement [d, t,t', i]
-	}
-}
 
 pred noInternalDroneChange[t,t':Time, d:Drone] 
 {
@@ -236,4 +245,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
 ============================================================
 */
 
-run go for 5 but exactly 7 Intersection, 1 Receptacle, 4 Time ,exactly 1 Drone , 5 Int
+run go for 5 but exactly 7 Intersection, 1 Receptacle, 2 Commande, 4 Time ,exactly 2 Drone , 5 Int
