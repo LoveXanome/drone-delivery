@@ -16,7 +16,7 @@ open util/ordering[Intersection] as io
 		currentIntersection : l'intersection actuelle du drone
 		cheminReceptacle : liste de tous les réceptacles par lequel va passer le drone pour livrer une commande
 		df : la destination final de la commande
-
+		batterie : la batterie associee au drone
 */
 sig Drone 
 {
@@ -26,10 +26,15 @@ sig Drone
 	df: ReceptacleAbstrait -> Time, //Destination finale
 	
 	commandes: set Commande,
-	currentCommande: commandes one -> Time
+	currentCommande: commandes one -> Time,
 
+	batterie: Batterie one -> Time
 }
 
+/**
+	Batterie :
+		Possede une valeur courante changeant avec le temps (currentalue) et une valeur maximum (maxValue)
+*/
 sig Batterie
 {
 	currentValue: Int,
@@ -155,6 +160,7 @@ pred IntersectionsReceptaclesUniques
 pred init [t:Time]
 {
 	all d:Drone | all e:Entrepot | d.currentIntersection.t.t = e.i
+	initBatterie[t]
 }
 
 /**
@@ -169,8 +175,8 @@ pred Grille
 
 	init[first]
 
-	//ToutesLesCommandesSontAttribuees
-	//TousLesReceptaclesSontAtteignables
+	ToutesLesCommandesSontAttribuees
+	TousLesReceptaclesSontAtteignables
 
 	CalculChemin[first]
 }
@@ -243,6 +249,15 @@ pred cheminLePlusCourt[d:Drone, t:Time]
 	}
 }
 
+/**
+	Initialise la valeur de chaque batterie de chaque drone
+*/
+pred initBatterie[t:Time]
+{
+	all d:Drone | d.batterie.t.maxValue = 3
+	all d:Drone | d.batterie.t.currentValue = d.batterie.t.maxValue
+}
+
 pred go 
 {
 	//Grille
@@ -267,7 +282,7 @@ assert NoDistantReceptacle
 ============================================================
 */
 
-check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
+check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 
 
 /**
