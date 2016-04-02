@@ -1,6 +1,7 @@
 open util/ordering[Time] as to
 open util/ordering[ReceptacleAbstrait] as ro
 open util/ordering[Intersection] as io
+open util/ordering[Commande] as co
 
 /**
 ============================================================
@@ -82,8 +83,9 @@ fact traces
 	Grille
     all t: Time-last | let t' = t.next
 	{
-		some d:Drone | some i: Intersection |
-		Deplacement [d, t,t', i]
+		some d:Drone | some i: Intersection, c: Commande |
+		Deplacement [d, t,t', i, c] 
+		or nouveauColis[d, t,t', c] 
 	}
 }
 
@@ -106,6 +108,11 @@ fun nextIntersection [i:Intersection, is: set Intersection]: set Intersection
 fun prevIntersection [i:Intersection, is: set Intersection]: set Intersection
 {
 	max[is & i.prevs]
+}
+
+fun nextCommande [c : Commande, cs : set Commande]: set Commande
+{
+	min[c.nexts & cs]
 }
 
 fun absVal [n:Int]: Int
@@ -159,9 +166,9 @@ pred Grille
 
 	IntersectionsUniques
 	IntersectionsReceptaclesUniques
-
+	ToutesCommandesAReceptacle
 	init[first]
-
+	
 	//ToutesLesCommandesSontAttribuees
 	//TousLesReceptaclesSontAtteignables
 
@@ -172,6 +179,11 @@ pred Grille
 pred ToutesLesCommandesSontAttribuees
 {
 	all c:Commande | some d:Drone | some c': d.commandes | c=c'
+}
+
+pred ToutesCommandesAReceptacle
+{
+	all c: Commande | some r: Receptacle | c.receptacle = r
 }
 
 pred TousLesReceptaclesSontAtteignables
@@ -199,11 +211,12 @@ pred pasDeDiagonale[i,i': Intersection]
 	(i.x = i'.x) || (i.y = i'.y)
 }
 
-pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
+pred Deplacement [d:Drone, t,t':Time, inter:Intersection, commande: Commande]
 {
 	// Déplacement suivant x
 	/* Précondition */
 	inter in d.cheminIntersection.t
+
 	/* Postcondition */
 	let ci = d.currentIntersection
 	{
@@ -217,12 +230,32 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	noInternalDroneChange[t,t',d]
 }
 
+pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
+{
+	//Précondition
+ 	commande in d.commandes
+	
+	//On est à l'entrepôt, on a besoin d'une nouvelle commande pour repartir
+	let cc = d.currentCommande
+	{
+		all e: Entrepot | (d.currentIntersection.t.t = d.df.t.i && d.df.t = e  ) implies ( commande = nextCommande[ cc.t , d.commandes ]  and cc.t' = commande) //and d.df.t' = commande.receptacle 
+
+	 //CalculChemin[t']
+	}
+	
+	noChangeNouveauColis[t,t',d]
+}
+
+pred noChangeNouveauColis[t,t':Time, d:Drone]
+{
+	d.currentIntersection.t.t = 	d.currentIntersection.t'.t' 
+}
 
 pred noInternalDroneChange[t,t':Time, d:Drone] 
 {
 	(d.cheminIntersection.t = d.cheminIntersection.t' and	
 	 d.cheminReceptacle.t = d.cheminReceptacle.t' and
-	 currentCommande.t = currentCommande.t')
+	 d.currentCommande.t = d.currentCommande.t' )
 }
 
 pred cheminLePlusCourt[d:Drone, t:Time]
@@ -269,4 +302,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 5 Time ,exactly 1 Drone , 6 Int
+run go for 5 but exactly 5 Intersection, 3 Receptacle, 2 Commande,12 Time ,exactly 1 Drone , 6 Int
