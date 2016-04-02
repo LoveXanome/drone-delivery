@@ -28,7 +28,7 @@ sig Drone
 	commandes: set Commande,
 	currentCommande: commandes one -> Time,
 
-	batterie: Int -> Time,
+	batterie: Int one -> Time,
 }
 
 /**
@@ -142,7 +142,7 @@ fun augmenterBatterie [d:Drone, t:Time]: Int
 */
 pred IntersectionsUniques 
 {
-	no i,i':Intersection | (i!=i') &&  (i.x = i'.x) && (i.y = i'.y)
+	no i,i':Intersection | (i!=i') and  (i.x = i'.x) and (i.y = i'.y)
 }
 
 /**
@@ -151,7 +151,7 @@ pred IntersectionsUniques
 */
 pred IntersectionsReceptaclesUniques 
 {
-	no r,r':ReceptacleAbstrait | (r!=r') && (r.i = r'.i)
+	no r,r':ReceptacleAbstrait | (r!=r') and (r.i = r'.i)
 }
 
 /**
@@ -194,7 +194,7 @@ pred ToutesLesCommandesSontAttribuees
 */
 pred TousLesReceptaclesSontAtteignables
 {
-	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
 /**
@@ -298,12 +298,12 @@ pred go {}
 
 assert NoDistantReceptacle
 {
-	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
 assert BatteryAlwaysBetweenZeroAndThree
 {
-	all d:Drone | all t:Time | d.batterie.t >= 0 && d.batterie.t <=3
+	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
 /**
