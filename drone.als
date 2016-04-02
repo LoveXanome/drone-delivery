@@ -74,6 +74,7 @@ fact DisjointCommandSets
 	Drone<:commandes in Drone lone-> Commande
 }
 
+
 /**
 * Gestion du temps et du déplacement
 **/
@@ -84,7 +85,7 @@ fact traces
     all t: Time-last | let t' = t.next
 	{
 		some d:Drone | some i: Intersection, c: Commande |
-		Deplacement [d, t,t', i, c] 
+		Deplacement [d, t,t', i] 
 		or nouveauColis[d, t,t', c] 
 	}
 }
@@ -168,9 +169,9 @@ pred Grille
 	IntersectionsReceptaclesUniques
 	ToutesCommandesAReceptacle
 	init[first]
-	
-	//ToutesLesCommandesSontAttribuees
-	//TousLesReceptaclesSontAtteignables
+
+	ToutesLesCommandesSontAttribuees
+	TousLesReceptaclesSontAtteignables
 
 	CalculChemin[first]
 }
@@ -211,7 +212,7 @@ pred pasDeDiagonale[i,i': Intersection]
 	(i.x = i'.x) || (i.y = i'.y)
 }
 
-pred Deplacement [d:Drone, t,t':Time, inter:Intersection, commande: Commande]
+pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 {
 	// Déplacement suivant x
 	/* Précondition */
@@ -225,25 +226,26 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection, commande: Commande]
 		//Ou on rentre à l'entrepôt
 		(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
 		//Ou on fait demi-tour. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
-		all e:Entrepot | (ci.t.t = d.df.t.i) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
+		all e:Entrepot | (ci.t.t = d.df.t.i && d.df.t != e ) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
 	}
 	noInternalDroneChange[t,t',d]
 }
 
 pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
 {
-	//Précondition
+	//Préconditions
  	commande in d.commandes
-	
-	//On est à l'entrepôt, on a besoin d'une nouvelle commande pour repartir
+	all e: Entrepot | d.df.t = e
+	d.currentIntersection.t.t =d.df.t.i 
+
+	//PostCondition
 	let cc = d.currentCommande
 	{
-		all e: Entrepot | (d.currentIntersection.t.t = d.df.t.i && d.df.t = e  ) implies ( commande = nextCommande[ cc.t , d.commandes ]  and cc.t' = commande) //and d.df.t' = commande.receptacle 
-	 	//CalculChemin[t']
+		commande = nextCommande[ cc.t , d.commandes ]  && cc.t' = commande  && d.df.t' =  cc.t' .receptacle &&	d.currentIntersection.t'.t' = d.currentIntersection.t.t  && CalculChemin[t']
 	}
-	
-	noChangeNouveauColis[t,t',d]
+	//noChangeNouveauColis[t,t',d]
 }
+
 
 pred noChangeNouveauColis[t,t':Time, d:Drone]
 {
