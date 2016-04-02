@@ -233,15 +233,15 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	/* Postcondition */
 	let ci = d.currentIntersection
 	{
-		((all interReceptacleAbstrait:ReceptacleAbstrait.i | ci.t.t = interReceptacleAbstrait) && (NotEnoughBattery[d.batterie, d.currentIntersection.t.t, d.df.t.i, t])) implies ReloadBattery[d,t,t']
+		((some interReceptacleAbstrait:ReceptacleAbstrait.i | ci.t.t = interReceptacleAbstrait) && (NotEnoughBattery[d.batterie, d.currentIntersection.t.t, d.df.t.i, t])) implies ReloadBattery[d,t,t']
 		else {
-		//On se déplace vers la livraison
-		(d.df.t = d.cheminReceptacle.t.max && ci.t.t != d.df.t.i) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
-		//Ou on rentre à l'entrepôt
-		(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
-		//Ou on fait demi-tour. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
-		all e:Entrepot | (ci.t.t = d.df.t.i) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
-		usingEnergy[d, t, t']
+			//On se déplace vers la livraison
+			(d.df.t = d.cheminReceptacle.t.max && ci.t.t != d.df.t.i) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
+			//Ou on rentre à l'entrepôt
+			(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
+			//Ou on fait demi-tour. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
+			all e:Entrepot | (ci.t.t = d.df.t.i) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
+			usingEnergy[d, t, t']
 		}
 	}
 	noInternalDroneChange[t,t',d]
@@ -293,7 +293,7 @@ pred usingEnergy[d:Drone, t,t': Time]
 */
 pred NotEnoughBattery[b:Batterie, currentInter:Intersection, destFinale:Intersection, t:Time]
 {
-	(currentInter != destFinale) && ((plus[absVal[minus[destFinale.x, currentInter.x]], absVal[minus[destFinale.y, currentInter.y]]]) > 3) && (b.currentValue.t != 3)
+	(currentInter != destFinale) && ((plus[ absVal[ minus[destFinale.x, currentInter.x] ], absVal[ minus[destFinale.y, currentInter.y] ] ]) > b.currentValue.t) //&& (b.currentValue.t != 3)
 }
 
 /**
