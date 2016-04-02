@@ -239,8 +239,7 @@ pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
 	let cc = d.currentCommande
 	{
 		all e: Entrepot | (d.currentIntersection.t.t = d.df.t.i && d.df.t = e  ) implies ( commande = nextCommande[ cc.t , d.commandes ]  and cc.t' = commande) //and d.df.t' = commande.receptacle 
-
-	 //CalculChemin[t']
+	 	//CalculChemin[t']
 	}
 	
 	noChangeNouveauColis[t,t',d]
