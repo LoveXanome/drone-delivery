@@ -90,6 +90,13 @@ fact traces
 	}
 }
 
+fact NoCollisionBetweenDrones
+{
+	//all t: Time | no d1,d2: Drone | d1.currentIntersection.t.t = d2.currentIntersection.t.t
+	//all d1: Drone | no d2:Drone | all t: Time | d1.currentIntersection.t = d2.currentIntersection.t or d1=d2
+	//all d1,d2: Drone | no t: Time | d1.currentIntersection.t.t.x = d2.currentIntersection.t.t.x and d1.currentIntersection.t.t.y = d2.currentIntersection.t.t.y
+}
+
 /**
 ============================================================
 																	FUN
@@ -321,4 +328,4 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, exactly 2 Receptacle, 1 Commande, exactly 10 Time, exactly 1 Drone , 5 Int
+run go for 5 but exactly 5 Intersection, exactly 2 Receptacle, 2 Commande, exactly 2 Drone , 5 Int, exactly 10 Time
