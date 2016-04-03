@@ -90,11 +90,9 @@ fact traces
 	}
 }
 
-fact NoCollisionBetweenDrones
+fact BatteryAlwaysBetweenZeroAndThree
 {
-	//all t: Time | no d1,d2: Drone | d1.currentIntersection.t.t = d2.currentIntersection.t.t
-	//all d1: Drone | no d2:Drone | all t: Time | d1.currentIntersection.t = d2.currentIntersection.t or d1=d2
-	//all d1,d2: Drone | no t: Time | d1.currentIntersection.t.t.x = d2.currentIntersection.t.t.x and d1.currentIntersection.t.t.y = d2.currentIntersection.t.t.y
+	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
 /**
@@ -308,11 +306,6 @@ assert NoDistantReceptacle
 	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
-assert BatteryAlwaysBetweenZeroAndThree
-{
-	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
-}
-
 /**
 ============================================================
 																	CHECK
@@ -320,7 +313,6 @@ assert BatteryAlwaysBetweenZeroAndThree
 */
 
 check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
-check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone , 5 Int
 
 /**
 ============================================================
