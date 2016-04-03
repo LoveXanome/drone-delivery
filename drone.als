@@ -85,7 +85,7 @@ fact traces
 	Grille
     all t: Time-last | let t' = t.next
 	{
-		some d:Drone | some i: Intersection |
+		all d:Drone | some i: Intersection |
 		Deplacement [d, t,t', i]
 	}
 }
@@ -321,4 +321,4 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, exactly 2 Receptacle, 1 Commande, exactly 10 Time, exactly 1 Drone , 5 Int
+run go for 5 but exactly 5 Intersection, exactly 2 Receptacle, 2 Commande, exactly 10 Time, exactly 2 Drone , 5 Int
