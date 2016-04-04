@@ -30,7 +30,7 @@ open util/ordering[Commande] as co
 		currentIntersection : l'intersection actuelle du drone
 		cheminReceptacle : liste de tous les réceptacles par lequel va passer le drone pour livrer une commande
 		df : la destination final de la commande
-
+		batterie : la batterie associee au drone
 */
 sig Drone 
 {
@@ -38,7 +38,8 @@ sig Drone
 	currentIntersection: cheminIntersection one -> Time, 
 	cheminReceptacle: set ReceptacleAbstrait -> Time,
 	df: ReceptacleAbstrait -> Time, //Destination finale
-	commande: Commande one -> Time
+	commande: Commande one -> Time,
+	batterie: Int one -> Time
 }
 
 /**
@@ -80,6 +81,7 @@ sig Iterateur {}
 																	FACTS
 ============================================================
 */
+
 /**
 	DisjointCommandSets
 		Chaque commandes peut être dans un seul drône
@@ -99,9 +101,13 @@ fact traces
     all t: Time-last | let t' = t.next
 	{
 		all d:Drone | some i: Intersection |
-		Deplacement [d, t,t', i] 
-		//or nouveauColis[d, t,t', c] 
+		Deplacement [d, t,t', i]
 	}
+}
+
+fact BatteryAlwaysBetweenZeroAndThree
+{
+	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
 
@@ -110,6 +116,7 @@ fact traces
 																	FUN
 ============================================================
 */
+
 fun nextReceptacle [r:ReceptacleAbstrait, rs: set ReceptacleAbstrait]: set ReceptacleAbstrait
 {
 	min[r.nexts & rs]
@@ -140,6 +147,15 @@ fun longueurCheminIntersection [is: set Intersection]: Int
 	#is
 }
 
+fun diminuerBatterie [d:Drone, t:Time]: Int
+{
+	Int[minus[d.batterie.t,1]]
+}
+
+fun augmenterBatterie [d:Drone, t:Time]: Int
+{
+	Int[plus[d.batterie.t,1]]
+}
 
 /**
 ============================================================
@@ -152,7 +168,7 @@ fun longueurCheminIntersection [is: set Intersection]: Int
 */
 pred IntersectionsUniques 
 {
-	no i,i':Intersection | (i!=i') &&  (i.x = i'.x) && (i.y = i'.y)
+	no i,i':Intersection | (i!=i') and  (i.x = i'.x) and (i.y = i'.y)
 }
 
 /**
@@ -161,7 +177,7 @@ pred IntersectionsUniques
 */
 pred IntersectionsReceptaclesUniques 
 {
-	no r,r':ReceptacleAbstrait | (r!=r') && (r.i = r'.i)
+	no r,r':ReceptacleAbstrait | (r!=r') and (r.i = r'.i)
 }
 
 /**
@@ -171,11 +187,12 @@ pred init [t:Time]
 {
 	all d:Drone | all e:Entrepot | d.currentIntersection.t.t = e.i
 	all e:Entrepot | e.currentCommande.first = e.commandes.min
-    all it: Iterateur-last | let it' = it.next
+	all it: Iterateur-last | let it' = it.next
 	{
 		some d:Drone |
 		initCommandes[d, it, it']
 	}
+	initBatterie[t]
 }
 
 /**
@@ -196,12 +213,16 @@ pred Grille
 	ToutesCommandesAReceptacle
 	init[first]
 
-	//ToutesLesCommandesSontAttribuees
+	//ToutesLesCommandesSontAttribuees // A mettre dans init //@Kévin : On le met pas ça sert à rien finalement
 	//TousLesReceptaclesSontAtteignables
 
 	CalculChemin[first]
 }
 
+
+/**
+	Permet d'etre certain que toutes les commandes seront attribuees a un drone
+*/
 /*pred ToutesLesCommandesSontAttribuees
 {
 	all c:Commande | some d:Drone | some c': d.commandes | c=c'
@@ -212,9 +233,12 @@ pred ToutesCommandesAReceptacle
 	all c: Commande | some r: Receptacle | c.receptacle = r
 }
 
+/**
+	Permet d'etre certain que tous les receptacles seront atteignables
+*/
 pred TousLesReceptaclesSontAtteignables
 {
-	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
 /**
@@ -246,12 +270,14 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	/* Postcondition */
 	let ci = d.currentIntersection
 	{
-		//On se déplace vers la livraison
-		(d.df.t = d.cheminReceptacle.t.max && ci.t.t != d.df.t.i) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
-		//Ou on rentre à l'entrepôt
-		(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t)
-		//Ou on fait demi-tour. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
-		all e:Entrepot | (ci.t.t = d.df.t.i && d.df.t != e ) implies (d.df.t' = e and ci.t'.t'=ci.t.t)
+			//Si on peut, on recharge jusqu'à pleine charge
+			rechargementPossible[d,t] implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t])
+			//On se déplace vers la livraison
+			(d.df.t = d.cheminReceptacle.t.max && ci.t.t != d.df.t.i) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])
+			//Ou on rentre à l'entrepôt
+			(d.df.t = d.cheminReceptacle.t.min && ci.t.t != d.df.t.i) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])
+			//Ou on fait demi-tour, mais seulement une fois chargé. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
+			all e:Entrepot | (d.batterie.t = 3 && ci.t.t = d.df.t.i ) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t)
 	}
 	noInternalDroneChange[t,t',d]
 }
@@ -295,12 +321,40 @@ pred cheminLePlusCourt[d:Drone, t:Time]
 	}
 }
 
-pred go 
+/**
+	Initialise la valeur de chaque batterie de chaque drone
+*/
+pred initBatterie[t:Time]
 {
-	//Grille
-	//all d:Drone | minus[longueurCheminIntersection[d.cheminIntersection.first],1] = 3
-	//all d:Drone | plus[absVal[minus[d.cheminReceptacle.first.min.i.x,d.cheminReceptacle.first.max.i.x]],absVal[minus[d.cheminReceptacle.first.min.i.y,d.cheminReceptacle.first.max.i.y]]] = 1
+	all d:Drone | d.batterie.t = 3
 }
+
+pred rechargementPossible [d:Drone, t:Time]
+{
+		let ci = d.currentIntersection
+	{
+		some ie : Entrepot.i, ir : Receptacle.i| ((ci.t.t= ie or ci.t.t= ir) and d.batterie.t <3)
+	}
+}
+
+pred rechargementImpossible [d:Drone, t:Time]
+{
+		let ci = d.currentIntersection
+	{
+		no ie : Entrepot.i, ir : Receptacle.i| ((ci.t.t= ie or ci.t.t= ir) or d.batterie.t >=3)
+	}
+}
+
+/**
+	Verification de la batterie pour analyser si le deplacement vers la destination est possible
+	Pour l'instant on souhaite recharger la batterie a son maximum avant de partir du receptacle
+*/
+pred NotEnoughBattery[d:Drone, currentInter:Intersection, destFinale:Intersection, t:Time]
+{
+	(currentInter != destFinale) && ((plus[ absVal[ minus[destFinale.x, currentInter.x] ], absVal[ minus[destFinale.y, currentInter.y] ] ]) > d.batterie.t) //&& (b.currentValue.t != 3)
+}
+
+pred go {}
 
 /**
 ============================================================
@@ -310,7 +364,7 @@ pred go
 
 assert NoDistantReceptacle
 {
-	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r')&&(absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
 /**
@@ -319,13 +373,11 @@ assert NoDistantReceptacle
 ============================================================
 */
 
-check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
-
+check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 
 /**
 ============================================================
 																	RUN
 ============================================================
 */
-
 run go for 5 but exactly 5 Intersection, 3 Receptacle, 2 Commande,12 Time ,exactly 1 Drone , 6 Int, exactly 2 Iterateur
