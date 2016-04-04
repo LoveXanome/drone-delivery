@@ -242,7 +242,7 @@ pred peutAvancer[d:Drone, t,t':Time]
 {
 	let ci = d.currentIntersection
 	{
-		d.df.t = d.cheminReceptacle.t.max and ci.t.t != d.df.t.i// and intersectionPasOccupee[nextIntersection[ci.t.t, d.cheminIntersection.t],t']
+		d.df.t = d.cheminReceptacle.t.max and ci.t.t != d.df.t.i
 	}
 }
 
@@ -250,7 +250,7 @@ pred peutReculer[d:Drone, t,t':Time]
 {
 	let ci = d.currentIntersection
 	{
-		d.df.t = d.cheminReceptacle.t.min and ci.t.t != d.df.t.i// and intersectionPasOccupee[prevIntersection[ci.t.t, d.cheminIntersection.t],t']
+		d.df.t = d.cheminReceptacle.t.min and ci.t.t != d.df.t.i
 	}
 }
 
