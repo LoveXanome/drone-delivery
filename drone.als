@@ -85,8 +85,7 @@ fact traces
 	Grille
     all t: Time-last | let t' = t.next
 	{
-		all d:Drone | (some i: Intersection | Deplacement [d, t,t', i])
-								or Attente[d,t,t']
+		all d:Drone | (some i: Intersection | Deplacement [d, t,t', i]) or Attente[d,t,t']
 	}
 }
 
@@ -231,11 +230,11 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	let ci = d.currentIntersection
 	{
 			//Si on peut, on recharge jusqu'à pleine charge
-			(rechargementPossible[d,t] implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t])) or
+			(rechargementPossible[d,t] implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t]))
 			//On se déplace vers la livraison
-			(peutAvancer[d, t, t'] implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])) or
+			(peutAvancer[d, t, t'] implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t]))
 			//Ou on rentre à l'entrepôt
-			(peutReculer[d, t, t'] implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])) or
+			(peutReculer[d, t, t'] implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t]))
 			//Ou on fait demi-tour, mais seulement une fois chargé. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
 			(all e:Entrepot | (d.batterie.t = 3 and ci.t.t = d.df.t.i ) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t))
 	}
