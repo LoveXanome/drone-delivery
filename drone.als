@@ -258,14 +258,24 @@ pred peutReculer[d:Drone, t,t':Time]
 pred intersectionOccupee[d,d2: Drone, t,t': Time]
 {
 // TODO attention pour le retour : prevIntersection
-	d != d2 
+	d != d2 // Les deux drones ne sont pas les mêmes
 	and
-	//TODO à optimiser
-	(some ie : Entrepot.i, ir : Receptacle.i | ((d.currentIntersection.t.t= ie and d2.currentIntersection.t.t= ie) or (d.currentIntersection.t.t= ir and d2.currentIntersection.t.t= ir) and d.currentIntersection.t.t = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] and d2.currentIntersection.t.t = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]
-))//		and augmenterBatterie[d2,t] = d2.batterie.t'))
- 	or
-	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] and nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = d2.currentIntersection.t'.t'
-		and (all ie : Entrepot.i, ir : Receptacle.i | ((ie != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]) and (ir != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))))
+/*	//TODO à optimiser
+	(some ie : Entrepot.i, ir : Receptacle.i |
+			((d.currentIntersection.t.t= ie and d2.currentIntersection.t.t= ie) or (d.currentIntersection.t.t= ir and d2.currentIntersection.t.t= ir) // les deux intersections courantes sont le même entrepot ou receptacle
+			and d.currentIntersection.t.t = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // et le suivant du premier drone reste à sa place
+			and d2.currentIntersection.t.t = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] // ainsi que le deuxieme
+		//		and augmenterBatterie[d2,t] = d2.batterie.t') // et l'un doit avoir déjà recharger sa batterie
+			)
+	)
+ 	or*/
+	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // La prochaine intersection des deux drones est la même
+		and nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = d2.currentIntersection.t'.t' // et cette prochaine intersection est déjà la prochaine (choisie comme déplacement définitif) de l'autre drone 
+		and (
+				all ie : Entrepot.i, ir : Receptacle.i | // et cette intersection n'est pas un entrepot ou receptacle
+					((ie != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]) and (ir != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))
+				)
+	)
 }
 
 pred Attente[d:Drone, t,t': Time]
