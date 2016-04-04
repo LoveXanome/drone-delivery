@@ -85,13 +85,8 @@ fact traces
 	Grille
     all t: Time-last | let t' = t.next
 	{
-		all d:Drone | (some i: Intersection | Deplacement [d, t,t', i]) or Attente[d,t,t']
+		all d:Drone | some i: Intersection | Deplacement [d, t,t', i]
 	}
-}
-
-fact BatteryAlwaysBetweenZeroAndThree
-{
-	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
 /**
@@ -230,13 +225,15 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	let ci = d.currentIntersection
 	{
 			//Si on peut, on recharge jusqu'à pleine charge
-			(rechargementPossible[d,t] implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t]))
+			(rechargementPossible[d,t] and no d2: Drone | intersectionOccupee[d,d2,t]) implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t])
 			//On se déplace vers la livraison
-			(peutAvancer[d, t, t'] implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t]))
+			(peutAvancer[d, t, t']  and no d2: Drone | intersectionOccupee[d,d2,t]) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])
 			//Ou on rentre à l'entrepôt
-			(peutReculer[d, t, t'] implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t]))
+			(peutReculer[d, t, t'] and no d2: Drone | intersectionOccupee[d,d2,t]) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t])
 			//Ou on fait demi-tour, mais seulement une fois chargé. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
-			(all e:Entrepot | (d.batterie.t = 3 and ci.t.t = d.df.t.i ) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t))
+			all e:Entrepot | ((d.batterie.t = 3 and ci.t.t = d.df.t.i ) and no d2: Drone | intersectionOccupee[d,d2,t]) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t)
+			// Ou attente
+			(some d2: Drone | intersectionOccupee[d,d2,t]) implies Attente[d,t,t']
 	}
 	noInternalDroneChange[t,t',d]
 }
@@ -245,7 +242,7 @@ pred peutAvancer[d:Drone, t,t':Time]
 {
 	let ci = d.currentIntersection
 	{
-		d.df.t = d.cheminReceptacle.t.max and ci.t.t != d.df.t.i and intersectionPasOccupee[nextIntersection[ci.t.t, d.cheminIntersection.t],t']
+		d.df.t = d.cheminReceptacle.t.max and ci.t.t != d.df.t.i// and intersectionPasOccupee[nextIntersection[ci.t.t, d.cheminIntersection.t],t']
 	}
 }
 
@@ -253,20 +250,19 @@ pred peutReculer[d:Drone, t,t':Time]
 {
 	let ci = d.currentIntersection
 	{
-		d.df.t = d.cheminReceptacle.t.min and ci.t.t != d.df.t.i and intersectionPasOccupee[prevIntersection[ci.t.t, d.cheminIntersection.t],t']
+		d.df.t = d.cheminReceptacle.t.min and ci.t.t != d.df.t.i// and intersectionPasOccupee[prevIntersection[ci.t.t, d.cheminIntersection.t],t']
 	}
 }
 
 // La prochaine intersection envisagé au temps t
-pred intersectionPasOccupee[nextInter: Intersection, t: Time]
+pred intersectionOccupee[d,d2: Drone, t: Time]
 {
-	// TODO marche pas
-	no d: Drone | d.currentIntersection.t.t = nextInter
+	d!=d2 and nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
 }
 
 pred Attente[d:Drone, t,t': Time]
 {
-	(d.currentIntersection.t'.t' = d.currentIntersection.t.t and d.df.t' = d.df.t and d.batterie.t' = d.batterie.t)
+	d.currentIntersection.t'.t' = d.currentIntersection.t.t and d.df.t' = d.df.t and d.batterie.t' = d.batterie.t
 }
 
 pred noInternalDroneChange[t,t':Time, d:Drone] 
@@ -331,6 +327,11 @@ pred go {}
 assert NoDistantReceptacle
 {
 	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+}
+
+assert BatteryAlwaysBetweenZeroAndThree
+{
+	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
 /**
