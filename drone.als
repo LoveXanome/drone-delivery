@@ -1,7 +1,19 @@
 open util/ordering[Time] as to
+open util/ordering[Iterateur] as ito
 open util/ordering[ReceptacleAbstrait] as ro
 open util/ordering[Intersection] as io
 open util/ordering[Commande] as co
+
+
+/**
+============================================================
+																CONTRAT
+============================================================
+*
+* Il faut un itérateur de plus que de commandes
+*/
+
+
 
 /**
 ============================================================
@@ -25,9 +37,7 @@ sig Drone
 	currentIntersection: cheminIntersection one -> Time, 
 	cheminReceptacle: set ReceptacleAbstrait -> Time,
 	df: ReceptacleAbstrait -> Time, //Destination finale
-	
-	commandes: set Commande,
-	currentCommande: commandes one -> Time
+	commande: Commande one -> Time
 }
 
 /**
@@ -58,7 +68,11 @@ sig Receptacle extends ReceptacleAbstrait
 
 one sig Entrepot extends ReceptacleAbstrait
 {
+	commandes: set Commande,
+	currentCommande: commandes one -> Iterateur
 }
+
+sig Iterateur {}
 
 /**
 ============================================================
@@ -69,24 +83,23 @@ one sig Entrepot extends ReceptacleAbstrait
 	DisjointCommandSets
 		Chaque commandes peut être dans un seul drône
 */
-fact DisjointCommandSets
+/*fact DisjointCommandSets
 {
 	Drone<:commandes in Drone lone-> Commande
 }
-
+*/
 
 /**
 * Gestion du temps et du déplacement
 **/
 fact traces 
 {
-   
 	Grille
     all t: Time-last | let t' = t.next
 	{
-		some d:Drone | some i: Intersection, c: Commande |
+		all d:Drone | some i: Intersection |
 		Deplacement [d, t,t', i] 
-		or nouveauColis[d, t,t', c] 
+		//or nouveauColis[d, t,t', c] 
 	}
 }
 
@@ -156,31 +169,42 @@ pred IntersectionsReceptaclesUniques
 pred init [t:Time]
 {
 	all d:Drone | all e:Entrepot | d.currentIntersection.t.t = e.i
+	all e:Entrepot | e.currentCommande.first = e.commandes.min
+    all it: Iterateur-last | let it' = it.next
+	{
+		some d:Drone |
+		initCommandes[d, it, it']
+	}
 }
 
+/**
+	Initialise les commandes pour chaque drone en prenant les premires dans la liste de commandes de l'entrepot
+*/
+pred initCommandes[d:Drone, it, it': Iterateur]
+{
+	all e:Entrepot | d.commande.first = e.currentCommande.it and e.currentCommande.it' = nextCommande[e.currentCommande.it,e.commandes]
+}
 /**
 * On crée la grille d'intersections. Elle est pour l'instant de 3 par 3 
 */
 pred Grille 
 {
 	no i:Intersection | ((i.x) < 0) || ((i.y )<0) || ((i.x)>4) || ((i.y)>4)
-
 	IntersectionsUniques
 	IntersectionsReceptaclesUniques
 	ToutesCommandesAReceptacle
 	init[first]
 
-	ToutesLesCommandesSontAttribuees
-	TousLesReceptaclesSontAtteignables
+	//ToutesLesCommandesSontAttribuees
+	//TousLesReceptaclesSontAtteignables
 
 	CalculChemin[first]
 }
 
-
-pred ToutesLesCommandesSontAttribuees
+/*pred ToutesLesCommandesSontAttribuees
 {
 	all c:Commande | some d:Drone | some c': d.commandes | c=c'
-}
+}*/
 
 pred ToutesCommandesAReceptacle
 {
@@ -199,8 +223,8 @@ pred TousLesReceptaclesSontAtteignables
 pred CalculChemin [t:Time]
 {	
 	all d:Drone | cheminLePlusCourt[d,t]
-	all d:Drone | d.df.t = d.currentCommande.t.receptacle
-	all d:Drone, e:Entrepot | ((d.cheminReceptacle.t.min = e) && (d.cheminReceptacle.t.max =  d.currentCommande.t.receptacle)) && ((d.cheminIntersection.t.min = d.cheminReceptacle.t.min.i) && (d.cheminIntersection.t.max = d.cheminReceptacle.t.max.i))
+	all d:Drone | d.df.t = d.commande.t.receptacle
+	all d:Drone, e:Entrepot | ((d.cheminReceptacle.t.min = e) && (d.cheminReceptacle.t.max =  d.commande.t.receptacle)) && ((d.cheminIntersection.t.min = d.cheminReceptacle.t.min.i) && (d.cheminIntersection.t.max = d.cheminReceptacle.t.max.i))
 	// Distance de Manhattan entre les réceptacles
 	all d:Drone | all r0,r1 : d.cheminReceptacle.t | (r1 = nextReceptacle[r0,d.cheminReceptacle.t]) implies ((r0 != r1)&&(plus[absVal[minus[r1.i.x,r0.i.x]],absVal[minus[r1.i.y,r0.i.y]]]=2))
 	// Distance = 1 entre chaque intersection du cheminIntersection
@@ -231,7 +255,7 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection]
 	noInternalDroneChange[t,t',d]
 }
 
-pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
+/*pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
 {
 	//Préconditions
  	commande in d.commandes
@@ -245,7 +269,7 @@ pred nouveauColis[d:Drone, t,t':Time, commande : Commande]
 	}
 	//noChangeNouveauColis[t,t',d]
 }
-
+*/
 
 pred noChangeNouveauColis[t,t':Time, d:Drone]
 {
@@ -256,7 +280,7 @@ pred noInternalDroneChange[t,t':Time, d:Drone]
 {
 	(d.cheminIntersection.t = d.cheminIntersection.t' and	
 	 d.cheminReceptacle.t = d.cheminReceptacle.t' and
-	 d.currentCommande.t = d.currentCommande.t' )
+	 d.commande.t = d.commande.t' )
 }
 
 pred cheminLePlusCourt[d:Drone, t:Time]
@@ -303,4 +327,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 3 Receptacle, 2 Commande,12 Time ,exactly 1 Drone , 6 Int
+run go for 5 but exactly 5 Intersection, 3 Receptacle, 4 Commande,12 Time ,exactly 4 Drone , 6 Int, exactly 4 Iterateur
