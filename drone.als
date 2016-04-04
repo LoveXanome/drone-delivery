@@ -258,23 +258,22 @@ pred peutReculer[d:Drone, t,t':Time]
 pred intersectionOccupee[d,d2: Drone, t,t': Time]
 {
 // TODO attention pour le retour : prevIntersection
-	d != d2 // Les deux drones ne sont pas les mêmes
+	(d != d2) // Les deux drones ne sont pas les mêmes
 	and
-/*	//TODO à optimiser
-	(some ie : Entrepot.i, ir : Receptacle.i |
-			((d.currentIntersection.t.t= ie and d2.currentIntersection.t.t= ie) or (d.currentIntersection.t.t= ir and d2.currentIntersection.t.t= ir) // les deux intersections courantes sont le même entrepot ou receptacle
-			and d.currentIntersection.t.t = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // et le suivant du premier drone reste à sa place
-			and d2.currentIntersection.t.t = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] // ainsi que le deuxieme
-		//		and augmenterBatterie[d2,t] = d2.batterie.t') // et l'un doit avoir déjà recharger sa batterie
-			)
-	)
- 	or*/
-	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // La prochaine intersection des deux drones est la même
+	(
+		nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // La prochaine intersection des deux drones est la même
 		and nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = d2.currentIntersection.t'.t' // et cette prochaine intersection est déjà la prochaine (choisie comme déplacement définitif) de l'autre drone 
-		and (
-				all ie : Entrepot.i, ir : Receptacle.i | // et cette intersection n'est pas un entrepot ou receptacle
-					((ie != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]) and (ir != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))
+		and not ( // et cette intersection n'est pas un entrepot ou receptacle
+				some ie : Entrepot.i, ir : Receptacle.i | (nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ie or nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ir)
 				)
+	)
+ 	or
+	(
+		d.currentIntersection.t.t = d2.currentIntersection.t.t // les drones sont au même endroit
+		and rechargementPossible[d,t] and rechargementPossible[d2,t] // les deux ont la possibilité de se recharger
+		and d2.batterie.t' = augmenterBatterie[d2,t] // un drone a augmenté sa batterie
+		and d.batterie.t' = d.batterie.t // l'autre garde la même
+		
 	)
 }
 
@@ -366,4 +365,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
 ============================================================
 */
 
-run go for 5 but 5 Intersection, exactly 2 Receptacle, 2 Commande, exactly 10 Time, exactly 2 Drone , 5 Int
+run go for 5 but 5 Intersection, exactly 2 Receptacle, 2 Commande, exactly 15 Time, exactly 2 Drone , 5 Int
