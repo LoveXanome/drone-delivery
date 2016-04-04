@@ -257,7 +257,13 @@ pred peutReculer[d:Drone, t,t':Time]
 // La prochaine intersection envisagé au temps t
 pred intersectionOccupee[d,d2: Drone, t: Time]
 {
-	d!=d2 and nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+// TODO attention pour le retour : prevIntersection
+	d != d2 
+	and
+	//TODO à optimiser
+/*	(some ie : Entrepot.i, ir : Receptacle.i | ((d.currentIntersection.t.t= ie and d2.currentIntersection.t.t= ie) or (d.currentIntersection.t.t= ir and d2.currentIntersection.t.t= ir) and d.currentIntersection.t.t = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] and d2.currentIntersection.t.t = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))
+ 	or */
+	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t])
 }
 
 pred Attente[d:Drone, t,t': Time]
