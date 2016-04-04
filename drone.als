@@ -263,7 +263,8 @@ pred intersectionOccupee[d,d2: Drone, t: Time]
 	//TODO à optimiser
 /*	(some ie : Entrepot.i, ir : Receptacle.i | ((d.currentIntersection.t.t= ie and d2.currentIntersection.t.t= ie) or (d.currentIntersection.t.t= ir and d2.currentIntersection.t.t= ir) and d.currentIntersection.t.t = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] and d2.currentIntersection.t.t = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))
  	or */
-	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t])
+	(nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+		and (all ie : Entrepot.i, ir : Receptacle.i | ((ie != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]) and (ir != nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t]))))
 }
 
 pred Attente[d:Drone, t,t': Time]
