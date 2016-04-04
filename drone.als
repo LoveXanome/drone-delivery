@@ -10,7 +10,8 @@ open util/ordering[Commande] as co
 																CONTRAT
 ============================================================
 *
-* Il faut un itérateur de plus que de commandes
+* Il faut autant d'itérateurs que de commandes
+* Il faut un nombre de drônes inférieur ou égal au nombre de commandes
 */
 
 
@@ -327,4 +328,4 @@ check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 5 Int
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 3 Receptacle, 4 Commande,12 Time ,exactly 4 Drone , 6 Int, exactly 4 Iterateur
+run go for 5 but exactly 5 Intersection, 3 Receptacle, 2 Commande,12 Time ,exactly 1 Drone , 6 Int, exactly 2 Iterateur
