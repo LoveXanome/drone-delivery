@@ -102,11 +102,14 @@ fact traces
 	{
 		some d:Drone |
 		initCommandes[d, it, it']
-		all t: Time-last | let t' = t.next
-		{
-			all d:Drone | some i: Intersection |
-			Deplacement [d, t,t', i,it,it']
-		}
+	}
+
+	all t: Time-last | let t' = t.next
+	{
+		some itRef:Iterateur, it:Iterateur | 
+		IterateurPasse[it,itRef] and itRef.t' = itRef.t.next
+		all d:Drone | some i: Intersection |
+		Deplacement [d, t,t', i,it,it.next]
 	}
 }
 
@@ -167,6 +170,14 @@ fun augmenterBatterie [d:Drone, t:Time]: Int
 																	PRED
 ============================================================
 */
+
+/**
+* it est-il inférieur à itReference?
+*/
+pred IterateurPasse[it,itReference:Iterateur]
+{
+	lt[it,itReference] or it=itReference
+}
 
 /**
 * Les intersections ne peuvent pas être confondues
@@ -381,7 +392,7 @@ assert BatteryAlwaysBetweenZeroAndThree
 */
 
 check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
-check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone, 5 Int
+check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
 
 /**
 ============================================================
@@ -389,4 +400,4 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 //run go for 5 but exactly 5 Intersection, 1 Receptacle, exactly 5 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 5 Iterateur
-run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 2 Iterateur
