@@ -369,6 +369,11 @@ assert NoDistantReceptacle
 	Grille =>	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
 }
 
+assert BatteryAlwaysBetweenZeroAndThree
+{
+	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
+}
+
 /**
 ============================================================
 																	CHECK
@@ -376,10 +381,12 @@ assert NoDistantReceptacle
 */
 
 check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
+check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone, 5 Int
 
 /**
 ============================================================
 																	RUN
 ============================================================
 */
-run go for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande,13 Time ,exactly 1 Drone , 6 Int, exactly 2 Iterateur
+//run go for 5 but exactly 5 Intersection, 1 Receptacle, exactly 5 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 5 Iterateur
+run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
