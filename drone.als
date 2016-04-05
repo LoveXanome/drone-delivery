@@ -44,36 +44,58 @@ sig Drone
 
 /**
 	ReceptacleAbstrait
-		implémenté par tous les Receptacle et l'entrepot.
+		implémenté par tous les Receptacles et l'entrepot.
 */
 abstract sig ReceptacleAbstrait
 {
 	i:Intersection
 }
 
+/**
+	Représente l'évolution du temps dans le programme
+*/
 sig Time {}
 
+/**
+	Représente une intersection, sur lesquels sont être situé les receptacles, l'entrepôt et les drônes
+*/
 sig Intersection 
 {
 	x : Int, //Abscisse
 	y : Int	 //Ordonnée
 }
 
+/**
+	Une commande pouvant être assigné à un drone. 
+	Elle comporte pour le moment seulement le receptacle de livraison, soit le point d'arrivé de la commande
+*/
 sig Commande 
 {
 	receptacle : lone Receptacle
 }
 
+/**
+	Un receptacle est l'endroit où l'on peut délivrer une livraison. 
+	Il doivent tous êtres atteignables et permettent également aux drône de pouvoir recharger leurs batteries
+*/
 sig Receptacle extends ReceptacleAbstrait
 {
 }
 
+/**
+	L'entrepot est le receptacles de départ, où les drônes partent après avoir récupèrer les commandes.
+	Ils y reviennent également après chaque livraisons
+*/
 one sig Entrepot extends ReceptacleAbstrait
 {
 	commandes: set Commande,
 	currentCommande: commandes one -> Iterateur
 }
 
+/**
+	Permet d'itérer sur les différentes commandes, au fure et à mesur de l'évolution du programme. 
+	Ainsi, chaque drône aura une commande différentes des autres.
+*/
 sig Iterateur {}
 
 /**
@@ -93,7 +115,11 @@ sig Iterateur {}
 */
 
 /**
-* Gestion du temps et du déplacement
+* Gestion du temps et du déplacement.
+	C'est fait principale du programme, qui va ensuite appeller toutes les autres fonctions et prédicats.
+	
+	But : 	
+		On assigne toutes les premières commandes aux drônes, puis on lance le déplacement de chaque drône. 
 **/
 fact traces 
 {
@@ -122,41 +148,65 @@ fact BatteryAlwaysBetweenZeroAndThree
 ============================================================
 */
 
+/**
+	Retourne le prochain receptacle le plus proche de r
+*/
 fun nextReceptacle [r:ReceptacleAbstrait, rs: set ReceptacleAbstrait]: set ReceptacleAbstrait
 {
 	min[r.nexts & rs]
 }
 
+/**
+	Retourne la prochaine intersection la plus proche de i
+*/
 fun nextIntersection [i:Intersection, is: set Intersection]: set Intersection
 {
 	min[i.nexts & is]
 }
 
+/**
+	Retourne la précédente intersection la plus proche de i
+*/
 fun prevIntersection [i:Intersection, is: set Intersection]: set Intersection
 {
 	max[is & i.prevs]
 }
 
+/**
+	Retourne la prochaine commande 
+*/
 fun nextCommande [c : Commande, cs : set Commande]: set Commande
 {
 	min[c.nexts & cs]
 }
 
+/**
+	Retourne la valeur absolue d'un entier passé en paramètres.
+*/
 fun absVal [n:Int]: Int
 {
 	(n < 0) implies (Int[minus[0,n]]) else  Int [n]
 }
 
+/**
+	Retourne la longueur du chemin passé en paramètre
+*/
 fun longueurCheminIntersection [is: set Intersection]: Int
 {
 	#is
 }
 
+/**
+	Diminue de 1 la batterie d'un drone
+*/
 fun diminuerBatterie [d:Drone, t:Time]: Int
 {
 	Int[minus[d.batterie.t,1]]
 }
 
+/**
+	Augmente de 1 la batterie d'un drone
+*/
 fun augmenterBatterie [d:Drone, t:Time]: Int
 {
 	Int[plus[d.batterie.t,1]]
@@ -164,7 +214,7 @@ fun augmenterBatterie [d:Drone, t:Time]: Int
 
 /**
 ============================================================
-																	PRED
+																	PRED contraintes
 ============================================================
 */
 
@@ -176,6 +226,7 @@ pred IntersectionsUniques
 	no i,i':Intersection | (i!=i') and  (i.x = i'.x) and (i.y = i'.y)
 }
 
+
 /**
 * Les receptacles ne peuvent pas être confondus
 * Un receptacle ne peut pas se trouver au meme endroit que l'entrepot
@@ -184,6 +235,45 @@ pred IntersectionsReceptaclesUniques
 {
 	no r,r':ReceptacleAbstrait | (r!=r') and (r.i = r'.i)
 }
+
+/**
+	Permet d'etre certain que toutes les commandes seront attribuees a un drone
+*/
+/*pred ToutesLesCommandesSontAttribuees
+{
+	all c:Commande | some d:Drone | some c': d.commandes | c=c'
+}*/
+
+/**
+	Spécifie que toutes les intersections sont situé cote à cote, et non pas en diagonale
+*/
+pred pasDeDiagonale[i,i': Intersection]
+{
+	(i.x = i'.x) || (i.y = i'.y)
+}
+
+/**
+	Spécifie que toutes les commande on un receptacle existant comme point d'arrivé
+*/
+pred ToutesCommandesAReceptacle
+{
+	all c: Commande | some r: Receptacle | c.receptacle = r
+}
+
+/**
+	Permet d'etre certain que tous les receptacles seront atteignables
+*/
+pred TousLesReceptaclesSontAtteignables
+{
+	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
+}
+
+/**
+============================================================
+													PRED Initialisation
+============================================================
+*/
+
 
 /**
 	Initialise les d.currentIntersection.t.t et d.currentCommande.t.receptacle pour tous les drones
@@ -201,8 +291,9 @@ pred init [t:Time]
 */
 pred initCommandes[d:Drone, it, it': Iterateur]
 {
-	all e:Entrepot | d.commande.first = e.currentCommande.it and e.currentCommande.it' = nextCommande[e.currentCommande.it,e.commandes]
+	all e:Entrepot | d.commande.first = e.currentCommande.it and e.currentCommande.it' = nextCommande[e.currentCommande.it, e.commandes]
 }
+
 /**
 * On crée la grille d'intersections. Elle est pour l'instant de 3 par 3 
 */
@@ -220,27 +311,19 @@ pred Grille
 	all d:Drone | CalculChemin[first,d]
 }
 
-
 /**
-	Permet d'etre certain que toutes les commandes seront attribuees a un drone
+	Initialise la valeur de chaque batterie de chaque drone
 */
-/*pred ToutesLesCommandesSontAttribuees
+pred initBatterie[t:Time]
 {
-	all c:Commande | some d:Drone | some c': d.commandes | c=c'
-}*/
-
-pred ToutesCommandesAReceptacle
-{
-	all c: Commande | some r: Receptacle | c.receptacle = r
+	all d:Drone | d.batterie.t = 3
 }
 
 /**
-	Permet d'etre certain que tous les receptacles seront atteignables
+============================================================
+													PRED progression du programme
+============================================================
 */
-pred TousLesReceptaclesSontAtteignables
-{
-	all r:ReceptacleAbstrait | some r':ReceptacleAbstrait | ((r != r') and (absVal[minus[r.i.x,r'.i.x]]+absVal[minus[r.i.y,r'.i.y]] =< 3))
-}
 
 /**
 * On prends les intersections et non pas les receptacles pour pouvoir tester l'entrepôt
@@ -257,10 +340,6 @@ pred CalculChemin [t:Time,d:Drone]
 	all i0, i1 : d.cheminIntersection.t | (i1 = nextIntersection[i0,d.cheminIntersection.t]) implies ((i0 != i1)&&((plus[absVal[minus[i1.x,i0.x]],absVal[minus[i1.y,i0.y]]])= 1) /*&& pasDeDiagonale[i0, i1]*/)
 }
 
-pred pasDeDiagonale[i,i': Intersection]
-{
-	(i.x = i'.x) || (i.y = i'.y)
-}
 
 pred Deplacement [d:Drone, t,t':Time, inter:Intersection, it,it':Iterateur]
 {
@@ -305,6 +384,9 @@ pred nouveauColis[d:Drone, t':Time, it,it':Iterateur, e:Entrepot]
 	}
 }
 
+/**
+	Spécifie que rien ne change entre le temps t et t' dans un drone. 
+*/
 pred noInternalDroneChange[t,t':Time, d:Drone] 
 {
 	(d.cheminIntersection.t = d.cheminIntersection.t' and	
@@ -312,6 +394,10 @@ pred noInternalDroneChange[t,t':Time, d:Drone]
 	 d.commande.t = d.commande.t' )
 }
 
+/**
+	Calcul le chemin le plus court entre l'entrepot (d.cheminReceptacle.t.min) et la destination du drone (d.cheminReceptacle.t.max), pour savoir par où le drone 
+	va passé pour faire sa livraison
+*/
 pred cheminLePlusCourt[d:Drone, t:Time]
 {
 	let deb = d.cheminReceptacle.t.min.i
@@ -323,14 +409,12 @@ pred cheminLePlusCourt[d:Drone, t:Time]
 	}
 }
 
-/**
-	Initialise la valeur de chaque batterie de chaque drone
-*/
-pred initBatterie[t:Time]
-{
-	all d:Drone | d.batterie.t = 3
-}
 
+/**
+	Vérifie si le drone peut actuellement se recharger, en fonction de la position où il se trouve. 
+	
+	Un drone peut se recharger que si il se trouve à l'entrepot ou sur un receptacle et que ça batterie est inférieur à 3
+*/
 pred rechargementPossible [d:Drone, t:Time]
 {
 		let ci = d.currentIntersection
@@ -339,13 +423,16 @@ pred rechargementPossible [d:Drone, t:Time]
 	}
 }
 
-pred rechargementImpossible [d:Drone, t:Time]
+/**
+	
+*/
+/*pred rechargementImpossible [d:Drone, t:Time]
 {
 		let ci = d.currentIntersection
 	{
 		no ie : Entrepot.i, ir : Receptacle.i| ((ci.t.t= ie or ci.t.t= ir) or d.batterie.t >=3)
 	}
-}
+}*/
 
 /**
 	Verification de la batterie pour analyser si le deplacement vers la destination est possible
