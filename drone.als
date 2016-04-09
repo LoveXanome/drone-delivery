@@ -140,7 +140,6 @@ fact BatteryAlwaysBetweenZeroAndThree
 	all d:Drone | all t:Time | d.batterie.t >= 0 and d.batterie.t <= 3
 }
 
-
 /**
 ============================================================
 																	FUN
@@ -411,29 +410,59 @@ pred intersectionOccupee[d,d2: Drone, t,t': Time]
 	(d != d2) // Les deux drones ne sont pas les mêmes
 	and
 	(
+		(all entrepot : Entrepot | d.df.t != entrepot)
+		implies
 		(
-			nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // La prochaine intersection des deux drones est la même
-			and nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = d2.currentIntersection.t'.t' // et cette prochaine intersection est déjà la prochaine (choisie comme déplacement définitif) de l'autre drone 
-			and rechargementPossible[d,t] and rechargementImpossible[d2,t]
-			and not ( // et cette intersection n'est pas un entrepot ou receptacle
-					some ie : Entrepot.i, ir : Receptacle.i | (nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ie or nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ir)
+			(
+				let nextInter = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+				{
+					nextInter = nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] // La prochaine intersection des deux drones est la même
+					and nextInter = d2.currentIntersection.t'.t' // et cette prochaine intersection est  déjà la prochaine (choisie comme déplacement définitif) de l'autre drone
+					and no interEntrepot : Entrepot.i | (nextInter = interEntrepot) // et ce n'est pas l'entrepot
+				}
+			)
+			or
+			(
+				let nextInter = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+				{
+					nextInter = d2.currentIntersection.t.t // Drone va là où il y a un autre drone
+					and
+					(
+						rechargementPossible[d2, t] // l'autre se recharge
+						or
+						d2.df.t != d2.df.t' // l'autre livre (et change ça df)
 					)
+					and rechargementImpossible[d, t]
+					and no interEntrepot : Entrepot.i | (nextInter = interEntrepot) // et ce n'est pas l'entrepot
+				}
+			)
 		)
-		iff not
+		else // La même chose pour le retour
 		(
-			nextIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] = nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] // La prochaine intersection des deux drones est la même
-			and nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = d2.currentIntersection.t'.t' // et cette prochaine intersection est déjà la prochaine (choisie comme déplacement définitif) de l'autre drone 
-			and not ( // et cette intersection n'est pas un entrepot ou receptacle
-					some ie : Entrepot.i, ir : Receptacle.i | (nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ie or nextIntersection[d.currentIntersection.t.t, d.cheminIntersection.t] = ir)
+			(
+				let prevInter = prevIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+				{
+					prevInter = prevIntersection[d2.currentIntersection.t.t, d2.cheminIntersection.t] // La prochaine intersection des deux drones est la même
+					and prevInter = d2.currentIntersection.t'.t' // et cette prochaine intersection est  déjà la prochaine (choisie comme déplacement définitif) de l'autre drone
+					and no interEntrepot : Entrepot.i | (prevInter = interEntrepot) // et ce n'est pas l'entrepot
+				}
+			)
+			or
+			(
+				let prevInter = prevIntersection[d.currentIntersection.t.t, d.cheminIntersection.t]
+				{
+					prevInter = d2.currentIntersection.t.t // Drone va là où il y a un autre drone
+					and
+					(
+						rechargementPossible[d2, t] // l'autre se recharge
+						or
+						d2.df.t != d2.df.t' // l'autre livre (et change ça df)
 					)
+					and rechargementImpossible[d, t]
+					and no interEntrepot : Entrepot.i | (prevInter = interEntrepot) // et ce n'est pas l'entrepot
+				}
+			)
 		)
-	)
- 	or
-	(
-		d.currentIntersection.t.t = d2.currentIntersection.t.t // les drones sont au même endroit
-		and rechargementPossible[d,t] and rechargementPossible[d2,t] // les deux ont la possibilité de se recharger
-		and d2.batterie.t' = augmenterBatterie[d2,t] // un drone a augmenté sa batterie
-		and d.batterie.t' = d.batterie.t // l'autre garde la même
 	)
 }
 
@@ -531,4 +560,4 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande, 14 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
