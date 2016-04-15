@@ -238,17 +238,17 @@ pred Deplacement [d:Drone, t,t':Time, inter:Intersection, it,it':Iterateur]
 	let ci = d.currentIntersection
 	{
 			// Si on peut, on recharge jusqu'à pleine charge
-			(rechargementPossible[d,t] and no d2: Drone | intersectionOccupee[d,d2,t,t']) implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t] and noInternalDroneChange[t,t',d])
+			(rechargementPossible[d,t] and (no d2:Drone | intersectionOccupee[d,d2,t,t'])) implies (ci.t'.t' = ci.t.t and d.df.t' = d.df.t and d.batterie.t' = augmenterBatterie[d,t] and noInternalDroneChange[t,t',d])
 			// On se déplace vers la livraison
-			(peutAvancer[d, t, t']  and no d2: Drone | intersectionOccupee[d,d2,t,t']) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t] and noInternalDroneChange[t,t',d])
+			(peutAvancer[d, t, t'] and (no d2:Drone | intersectionOccupee[d,d2,t,t'])) implies (inter = nextIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t] and noInternalDroneChange[t,t',d])
 			// Ou on rentre à l'entrepôt
-			(peutReculer[d, t, t'] and no d2: Drone | intersectionOccupee[d,d2,t,t']) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t] and noInternalDroneChange[t,t',d])
+			(peutReculer[d, t, t'] and (no d2:Drone | intersectionOccupee[d,d2,t,t'])) implies (inter = prevIntersection[ci.t.t, d.cheminIntersection.t] and ci.t'.t' = inter and d.df.t' = d.df.t and d.batterie.t' = diminuerBatterie[d,t] and noInternalDroneChange[t,t',d])
 			// Ou on fait demi-tour, mais seulement une fois chargé. On ne bouge pas pendant le demi-tour (il y a un temps de livraison de 1 unité de temps)!!
-			all e:Entrepot | ((d.batterie.t = 3 and ci.t.t = d.df.t.i ) and no d2: Drone | intersectionOccupee[d,d2,t,t']) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t and noInternalDroneChange[t,t',d])
+			all e:Entrepot | (d.batterie.t = 3 and ci.t.t = d.df.t.i and d.df.t = d.cheminReceptacle.t.max and (no d2:Drone | intersectionOccupee[d,d2,t,t'])) implies (d.df.t' = e and ci.t'.t'=ci.t.t and d.batterie.t' = d.batterie.t and noInternalDroneChange[t,t',d])
 			// Ou attente
 			(some d2: Drone | intersectionOccupee[d,d2,t,t']) implies (Attente[d,t,t'] and noInternalDroneChange[t,t',d])
 			// Ou on récupère une nouvelle commande
-			all e:Entrepot | (d.batterie.t = 3 && d.df.t = d.cheminReceptacle.t.min && ci.t.t = d.df.t.i) implies (ci.t'.t' = ci.t.t and d.batterie.t' = d.batterie.t and nouveauColis[d, t',it,it',e])
+			all e:Entrepot | (d.batterie.t = 3 and d.df.t = d.cheminReceptacle.t.min and ci.t.t = d.df.t.i and (no d2:Drone | intersectionOccupee[d,d2,t,t'])) implies (ci.t'.t' = ci.t.t and d.batterie.t' = d.batterie.t and nouveauColis[d, t',it,it',e])
 	}
 }
 
@@ -547,6 +547,6 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 
-//run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande, 18 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
-run go for 5 but exactly 5 Intersection, 1 Receptacle, exactly 2 Commande, exactly 2 Iterateur, exactly 1 Drone, 6 Int, 11 Time
+run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 4 Commande, 19 Time, exactly 2 Drone, 6 Int, exactly 2 Iterateur
+//run go for 5 but exactly 5 Intersection, 1 Receptacle, exactly 4 Commande, exactly 2 Iterateur, exactly 2 Drone, 6 Int, 16 Time
 
