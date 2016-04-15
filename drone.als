@@ -547,4 +547,6 @@ check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Recep
 ============================================================
 */
 
-run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande, 18 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+//run go for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande, 18 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+run go for 5 but exactly 5 Intersection, 1 Receptacle, exactly 2 Commande, exactly 2 Iterateur, exactly 1 Drone, 6 Int, 11 Time
+
