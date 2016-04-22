@@ -25,7 +25,7 @@ open util/ordering[Commande] as co
 /**
 	Le drone : 
 	attributs : 
-		cheminIntersection : liste de toutes les intersections par lequel va passer le drone pour livrer une commande
+		cheminIntersection : liste de toutes les intersections par lesquelles va passer le drone pour livrer une commande
 			On passe à l'intersection suivante en fonction du temps
 		currentIntersection : l'intersection actuelle du drone
 		cheminReceptacle : liste de tous les réceptacles par lequel va passer le drone pour livrer une commande
@@ -522,8 +522,9 @@ assert BatteryAlwaysBetweenZeroAndThree
 ============================================================
 */
 
-check NoDistantReceptacle for 5 but 1 Receptacle, 1 Time , 2 Drone , 3 Int
-check BatteryAlwaysBetweenZeroAndThree for 5 but exactly 5 Intersection, 1 Receptacle, 2 Commande, 10 Time, exactly 1 Drone, 5 Int
+check NoDistantReceptacle for 5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+check BatteryAlwaysBetweenZeroAndThree for  5 but exactly 5 Intersection, 2 Receptacle, exactly 6 Commande,13 Time ,exactly 2 Drone , 6 Int, exactly 3 Iterateur
+
 
 /**
 ============================================================
